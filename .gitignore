@@ -1,0 +1,29 @@
+
+### ignore develop tools files
+.idea
+*.iml
+*.ipr
+*.iws
+*.swp
+.DS_Store
+
+### ignore built output files
+*.pyc
+*.class
+
+### ignore common automatically generated files, for example, logs
+logs/*
+*/logs/*
+*.log
+*.log.*
+env/*
+
+mammoth/celerybeat.pid
+mammoth/tmp/*
+**/.vscode/*
+
+.project
+
+.ipynb_checkpoints/*
+*.ipynb
+

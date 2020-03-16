@@ -1,2 +1,4 @@
 requests==2.23.0
-requests[socks]
+PySocks==1.7.1
+PyYAML==5.3
+redis==3.4.1

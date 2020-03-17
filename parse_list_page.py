@@ -9,6 +9,7 @@ def parse_list_page(url, logger):
     logger.info('parsing movies from %s' % url)
     all_movies = {}
     parse_success = False
+    next_url = ''
     headers = {"cookie": "existmag=all"}
     try:
         r = requests.get(url, headers=headers)

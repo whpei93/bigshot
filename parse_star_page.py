@@ -16,8 +16,10 @@ def main():
     redis_conn = init_redis_conn(config.get('redis'), logger)
 
     star_info_key_list = redis_conn.keys("star_info_*")
+    print(len(star_info_key_list))
     for star_info_key in star_info_key_list:
         star_url = redis_conn.hget(star_info_key, "url").strip()
+        logger.info('parse star info %s' %star_url)
         host = star_url.split('star')[0]
         star_id = genre_url.split('star')[1]
         star_url_en = host + 'en/' + 'star' + star_id
@@ -49,8 +51,6 @@ def main():
                 logger.error('failed to get en/ja for star page: %s, error code: en_page: %s, ja_page: %s' %(star_url, r_en.status_code, r_ja.status_code))
         except Exception as e:
             logger.error('failed to parse star page: %s, error: %s' % (star_url, e))
-
-
 
 
 if __name__ == "__main__":

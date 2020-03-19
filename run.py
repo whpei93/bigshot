@@ -15,6 +15,11 @@ def main():
 
     redis_conn = init_redis_conn(config.get('redis'), logger)
 
+    star_key_list = redis_conn.keys('start_info_*')
+    for star_key in star_key_list:
+        star_info = redis_conn.hgetall(star_key)
+        redis_conn.hmset()
+
     movie_key_list = redis_conn.keys('movie_info_*')
     item_key_map = {
             "識別碼": "id",
@@ -41,7 +46,7 @@ def main():
                 if changed:
                     movie_info_tmp[item_name]['name'] = item
                 if value['url']:
-                    redis_conn.hmset(item_name+'_info', value)
+                    redis_conn.hmset(item_name+'_info_'+value['id'], value)
                     redis_conn.delete(item+'_info')
                 else:
                     redis_conn.delete(item+'_info')

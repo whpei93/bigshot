@@ -5,7 +5,7 @@ import json
 import redis
 import yaml
 
-from parse_detail_page import parse_detail_page
+from parse_movie_page import parse_movie_page
 
 
 def main(url, logger, redis_conn):
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     logger.info('%s movies need to parsed' % len(need_to_parse_movies_id))
     for movie_id in need_to_parse_movies_id:
         movie_url = redis_conn.get('need_to_parse_'+movie_id)
-        parse_success, movie_info = parse_detail_page(movie_url, logger)
+        parse_success, movie_info = parse_movie_page(movie_url, logger, redis_conn)
         if parse_success:
             redis_conn.set('done_parse_'+movie_id, movie_url)
             redis_conn.set('movie_info_'+movie_id, json.dumps(movie_info))

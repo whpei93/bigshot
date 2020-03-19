@@ -97,5 +97,3 @@ if __name__ == "__main__":
                 redis_conn.hmset('genre_info_'+genre_id, genre_info)
         else:
             pass
-
-

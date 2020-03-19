@@ -44,12 +44,13 @@ def parse_detail_page(url, logger):
                     item_url = item.find("a")['href'].strip().strip('/')
                     item_id = item_url.split('/')[-1]
                 else:
-                    item_url = ''
-                    item_id = ''
+                    item_url = 'unknown'
+                    item_id = 'unknown'
                 movie_info[item_name] = {}
                 movie_info[item_name]['value'] = item_value
                 movie_info[item_name]['id'] = item_id
                 movie_info[item_name]['url'] = item_url
+                redis_conn.hmset(item_name+'_info', movie_info[item_name])
 
             movie_info['genre'] = {}
             if genre_index.find_next("p"):
@@ -60,6 +61,7 @@ def parse_detail_page(url, logger):
                     movie_info['genre'][genre_id] = {}
                     movie_info['genre'][genre_id]['name'] = genre_name
                     movie_info['genre'][genre_id]['url'] = genre_url
+                    redis_conn.hmset('genre_info_'+genre_id, movie_info['genre'][genre_id])
             else:
                 logger.info('no genre info for %s' % url)
 
@@ -73,6 +75,7 @@ def parse_detail_page(url, logger):
                     movie_info['stars'][star_id] = {}
                     movie_info['stars'][star_id]['name'] = star_name
                     movie_info['stars'][star_id]['url'] = star_url
+                    redis_conn.hmset('genre_info_'+star_id, movie_info['stars'][star_id])
             else:
                 logger.info('no star info for %s' % url)
 

@@ -17,10 +17,12 @@ def main():
     movie_key_list = redis_conn.keys('movie_info_*')
     for movie_key in movie_key_list:
         movie_info = json.loads(redis_conn.get(movie_key))
-        for star_id, star in movie_info['stars'].items():
-            star_key = "start_info_" + star_id
-            redis_conn.hmset(star_key, star)
-            print(star_key)
+        for item, value in movie_info.items():
+            if item in ['stars', 'url', 'title', 'big_image_url', 'sample_image_urls', 'sample_small_image_urls', 'magnets']:
+                pass
+            else:
+                redis_conn.hmset(item+'_info', value)
+                print(item+'_info')
 
 if __name__ == "__main__":
     main()

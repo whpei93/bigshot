@@ -93,7 +93,5 @@ if __name__ == "__main__":
             redis_conn.set('done_parse_'+movie_id, movie_url)
             redis_conn.set('movie_info_'+movie_id, json.dumps(movie_info))
             logger.info('done parse %s' %movie_url)
-            for genre_id, genre_info in movie_info['genre'].items():
-                redis_conn.hmset('genre_info_'+genre_id, genre_info)
         else:
             pass

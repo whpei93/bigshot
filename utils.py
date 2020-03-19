@@ -3,6 +3,22 @@ import logging
 import redis
 import requests
 import yaml
+import shutil
+
+
+def download_image(url, dst, logger):
+    success = False
+    try:
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            with open(dst, 'wb') as out_file:
+                shutil.copyfileobj(response.raw, out_file)
+        else:
+            logger.error('download %s failed, status_code: %s' %(url, response.status_code))
+        success = True
+    except Exception as e:
+        logger.error('download %s failed, error: %s' %(url, e))
+    return success
 
 
 def load_config(config_file):

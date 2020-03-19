@@ -24,12 +24,13 @@ def parse_movie_page(url, logger, redis_conn):
             movie_info['big_image_url'] = bigImage_src
 
             # parse sample image urls
-            movie_info['sample_image_urls'] = []
-            movie_info['sample_small_image_urls'] = []
+            movie_info['sample_image_urls'] = {}
+            movie_info['sample_small_image_urls'] = {}
             sample_image_list = soup.find_all("a", class_="sample-box")
+            tmp_count = 1
             for sample_image in sample_image_list:
-                movie_info['sample_image_urls'].append(sample_image['href'].strip().strip('/'))
-                movie_info['sample_small_image_urls'].append(sample_image.img['src'].strip().strip('/'))
+                movie_info['sample_image_urls'][tmp_count] = sample_image['href'].strip().strip('/')
+                movie_info['sample_small_image_urls'][tmp_count] = sample_image.img['src'].strip().strip('/')
 
             # parse movie info
             info_table = soup.find("div", class_="col-md-3 info")
@@ -44,13 +45,14 @@ def parse_movie_page(url, logger, redis_conn):
                     item_url = item.find("a")['href'].strip().strip('/')
                     item_id = item_url.split('/')[-1]
                 else:
-                    item_url = 'unknown'
-                    item_id = 'unknown'
+                    item_url = ''
+                    item_id = ''
                 movie_info[item_name] = {}
                 movie_info[item_name]['value'] = item_value
                 movie_info[item_name]['id'] = item_id
                 movie_info[item_name]['url'] = item_url
-                redis_conn.hmset(item_name+'_info', movie_info[item_name])
+                if item_url and item_id:
+                    redis_conn.hmset(item_name+'_'+item_id, movie_info[item_name])
 
             movie_info['genre'] = {}
             if genre_index.find_next("p"):
@@ -61,7 +63,7 @@ def parse_movie_page(url, logger, redis_conn):
                     movie_info['genre'][genre_id] = {}
                     movie_info['genre'][genre_id]['name'] = genre_name
                     movie_info['genre'][genre_id]['url'] = genre_url
-                    redis_conn.hmset('genre_info_'+genre_id, movie_info['genre'][genre_id])
+                    redis_conn.hmset('genre_'+genre_id, movie_info['genre'][genre_id])
             else:
                 logger.info('no genre info for %s' % url)
 
@@ -75,7 +77,7 @@ def parse_movie_page(url, logger, redis_conn):
                     movie_info['stars'][star_id] = {}
                     movie_info['stars'][star_id]['name'] = star_name
                     movie_info['stars'][star_id]['url'] = star_url
-                    redis_conn.hmset('star_info_'+star_id, movie_info['stars'][star_id])
+                    redis_conn.hmset('star_'+star_id, movie_info['stars'][star_id])
             else:
                 logger.info('no star info for %s' % url)
 

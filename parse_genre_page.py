@@ -1,18 +1,19 @@
 import requests
 from bs4 import BeautifulSoup
 
-from utils import init_logger, load_config, init_redis_conn, get_page
+from utils import init_logger, load_config, init_redis_conn
 
 
 def main():
     config = load_config('config.yml')
-    redis_conn = init_redis_conn(config.get('redis'))
 
     log_config = config.get('log')
     log_file = log_config.get('parse_genre_log_file')
     log_level = log_config.get('log_level')
     log_formatter = log_config.get('log_formatter')
     logger = init_logger(log_file, log_level, log_formatter)
+
+    redis_conn = init_redis_conn(config.get('redis'), logger)
 
     genre_info_key_list = redis_conn.keys("genre_info_*")
     for genre_info_key in genre_info_key_list:

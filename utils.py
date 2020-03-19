@@ -2,6 +2,7 @@ import logging
 
 import redis
 import requests
+import yaml
 
 
 def load_config(config_file):
@@ -43,7 +44,7 @@ def init_logger(log_file, log_level, log_formatter):
     return logger
 
 
-def init_redis_conn(redis_config, logger)
+def init_redis_conn(redis_config, logger):
     redis_host = redis_config.get('redis_host')
     redis_port = redis_config.get('redis_port')
     redis_db = redis_config.get('redis_db')

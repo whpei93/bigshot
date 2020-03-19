@@ -5,6 +5,15 @@ from bs4 import BeautifulSoup
 
 
 def parse_detail_page(url, logger):
+    item_key_map = {
+            "識別碼": "id",
+            "發行日期": "release_date",
+            "長度": "length",
+            "製作商": "studio",
+            "發行商": "label",
+            "系列": "series",
+            "導演": "director"
+    }
     movie_info = {}
     parse_success = False
     logger.info('start parsing %s' %url)
@@ -37,7 +46,7 @@ def parse_detail_page(url, logger):
             genre_index = info_table.find("p", class_="header")
             for item in genre_index.find_all_previous("p"):
                 item_name = item.text.split(':')[0].strip().lower()
-                item_name = '_'.join(item_name.split())
+                item_name = item_key_map.get(item_name)
                 item_value = item.text.split(':')[1].strip().lower()
                 item_value = '_'.join(item_value.split())
                 if item.find("a"):

@@ -6,6 +6,7 @@ import redis
 import yaml
 
 from parse_movie_page import parse_movie_page
+from utils import init_logger, load_config, init_redis_conn
 
 
 def main(url, logger, redis_conn):
@@ -28,45 +29,6 @@ def main(url, logger, redis_conn):
     return next_url
 
 
-def load_config(config_file):
-    config = dict()
-    try:
-        with open(config_file) as f:
-            config = yaml.full_load(f)
-    except Exception as e:
-        print('failed to load config from %s, error: %s' %(config_file, e))
-    return config
-
-
-def init_logger(log_file, log_level, log_formatter):
-    log_level_map = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL
-    }
-    log_level = log_level_map.get(log_level)
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(log_level)
-
-    formatter = logging.Formatter(log_formatter)
-
-    ch = logging.StreamHandler()
-    ch.setLevel(log_level)
-    ch.setFormatter(formatter)
-
-    fh = logging.FileHandler(log_file)
-    fh.setLevel(log_level)
-    fh.setFormatter(formatter)
-
-    logger.addHandler(ch)
-    logger.addHandler(fh)
-
-    return logger
-
-
 if __name__ == "__main__":
     config = load_config('config.yml')
 
@@ -77,21 +39,26 @@ if __name__ == "__main__":
     logger = init_logger(log_file, log_level, log_formatter)
 
     redis_config = config.get('redis')
-    redis_host = redis_config.get('redis_host')
-    redis_port = redis_config.get('redis_port')
-    redis_db = redis_config.get('redis_db')
-    redis_conn = redis.StrictRedis(host=redis_host, port=redis_port, db=redis_db, decode_responses=True)
+    redis_conn = init_redis_conn(redis_config, logger)
 
-    movies_id = [str(i).split('_')[-1] for i in redis_conn.keys("need_to_parse_*")]
-    done_parse_movies_id = [i.split('_')[-1] for i in redis_conn.keys("done_parse_*")]
-    need_to_parse_movies_id = set(movies_id) - set(done_parse_movies_id)
-    logger.info('%s movies need to parsed' % len(need_to_parse_movies_id))
-    for movie_id in need_to_parse_movies_id:
-        movie_url = redis_conn.get('need_to_parse_'+movie_id)
+    movie_key_list = redis_conn.keys("movie_*")
+    for movie_key in movie_key_list:
+        # movie already been parsed
+        if redis_conn.hget(movie_key, "parsed") == 1:
+            continue
+        movie_url = redis_conn.hget(movie_key, "url")
+        movie_id = movie_url.split('/')[-1]
+        domain_name = movie_url.strip('en/'+movie_id)
+        movie_url_ch = domain_name + movie_id
+        movie_url_ja = domain_name + 'ja/' + movie_id
+
         parse_success, movie_info = parse_movie_page(movie_url, logger, redis_conn)
         if parse_success:
-            redis_conn.set('done_parse_'+movie_id, movie_url)
-            redis_conn.set('movie_info_'+movie_id, json.dumps(movie_info))
+            update_info = {}
+            update_info['parsed'] = 1
+            update_info['id'] = movie_id
+            update_info['movie_url_ch'] = movie_url_ch
+            update_info['movie_url_ja'] = movie_url_ja
+            update_info['movie_info'] = json.dumps(movie_info)
+            redis_conn.hmset(movie_key, update_info)
             logger.info('done parse %s' %movie_url)
-        else:
-            pass

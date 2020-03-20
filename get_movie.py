@@ -49,7 +49,7 @@ if __name__ == "__main__":
         movie_url = redis_conn.hget(movie_key, "url")
         movie_id = movie_url.split('/')[-1]
         domain_name = movie_url.strip('/en/'+movie_id)
-        movie_url_ch = domain_name + movie_id
+        movie_url_ch = domain_name + '/' +  movie_id
         movie_url_ja = domain_name + '/ja/' + movie_id
 
         parse_success, movie_info = parse_movie_page(movie_url, logger, redis_conn)

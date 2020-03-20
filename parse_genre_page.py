@@ -19,11 +19,11 @@ def get_genre(genre_info_key_list, redis_conn, logger):
                 genre_ch_name = r_ch_soup.find('div', class_="alert alert-success alert-common").p.b.text.split('-')[0].strip()
                 genre_ja_name = r_ja_soup.find('div', class_="alert alert-success alert-common").p.b.text.split('-')[0].strip()
                 redis_conn.hmset(genre_info_key, {"name_ch": genre_ch_name, "name_ja": genre_ja_name, "url_ch": genre_url_ch, "url_ja": genre_url_ja})
-                logger.info('parsed info for genre page: %s' % genre_url)
+                logger.info('parsed info for genre page: %s' % genre_url_en)
             else:
-                logger.error('failed to get en/ja for genre page: %s, error code: en_page: %s, ja_page: %s' %(genre_url, r_en.status_code, r_ja.status_code))
+                logger.error('failed to get en/ja for genre page: %s, error code: en_page: %s, ja_page: %s' %(genre_url_en, r_en.status_code, r_ja.status_code))
         except Exception as e:
-            logger.error('failed to parse genre page: %s, error: %s' % (genre_url, e))
+            logger.error('failed to parse genre page: %s, error: %s' % (genre_url_en, e))
 
 
 def main():

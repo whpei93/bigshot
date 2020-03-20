@@ -27,12 +27,11 @@ def get_star(star_info_key_list, redis_conn, logger):
                     item = i.text.strip().split(':')[0]
                     value = i.text.strip().split(':')[1].strip()
                     star_info[item] = value
-                update_info = {}
+                update_info = star_info
                 update_info['name_ch'] = star_ch_name
                 update_info['name_ja'] = star_ja_name
                 update_info['url_ja'] = star_url_ja
                 update_info['url_ch'] = star_url_ch
-                update_info['star_info'] = star_info
                 redis_conn.hmset(star_info_key, update_info)
                 logger.info('parsed info for star page: %s' % star_url)
             else:

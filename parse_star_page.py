@@ -15,8 +15,8 @@ def get_star(star_info_key_list, redis_conn, logger):
             r_ch = requests.get(star_url_ch)
             r_ja = requests.get(star_url_ja)
             if r_ch.status_code == 200 and r_ja.status_code == 200:
-                r_ch_soup = BeautifulSoup(r_ch.contcht, 'xml')
-                r_ja_soup = BeautifulSoup(r_ja.contcht, 'xml')
+                r_ch_soup = BeautifulSoup(r_ch.content, 'xml')
+                r_ja_soup = BeautifulSoup(r_ja.content, 'xml')
                 star_ch_name = r_ch_soup.find('div', class_="alert alert-success alert-common").p.b.text.split('-')[0].strip()
                 star_ja_name = r_ja_soup.find('div', class_="alert alert-success alert-common").p.b.text.split('-')[0].strip()
 
@@ -54,10 +54,10 @@ def main():
 
     cursor = 0
     batch_count = 100
-    cursor, star_info_key_list = redis_conn.scan(cursor, "star_*", batch)
+    cursor, star_info_key_list = redis_conn.scan(cursor, "star_*", batch_count)
     while cursor != 0:
         get_star(star_info_key_list, redis_conn, logger)
-        cursor, star_info_key_list = redis_conn.scan(cursor, "star_*", batch)
+        cursor, star_info_key_list = redis_conn.scan(cursor, "star_*", batch_count)
     get_star(star_info_key_list, redis_conn, logger)
 
 

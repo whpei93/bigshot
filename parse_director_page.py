@@ -5,7 +5,7 @@ def main():
     config = load_config('config.yml')
 
     log_config = config.get('log')
-    log_file = log_config.get('parse_director_log_file')
+    log_file = log_config.get('parse_item_info_log_file')
     log_level = log_config.get('log_level')
     log_formatter = log_config.get('log_formatter')
     logger = init_logger(log_file, log_level, log_formatter)

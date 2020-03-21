@@ -1,7 +1,4 @@
-import requests
-from bs4 import BeautifulSoup
-
-from utils import init_logger, load_config, init_redis_conn
+from utils import init_logger, load_config, init_redis_conn, get_item_info
 
 
 def main():
@@ -17,7 +14,7 @@ def main():
 
     cursor = 0
     batch_count = 100
-    item_name = "star"
+    item_name = "series"
     cursor, key_list = redis_conn.scan(cursor, "%s_*" % item_name, batch_count)
     while cursor != 0:
         get_item_info(key_list, item_name, redis_conn, logger)

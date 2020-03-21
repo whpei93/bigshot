@@ -66,3 +66,47 @@ def init_redis_conn(redis_config, logger):
     redis_db = redis_config.get('redis_db')
     redis_conn = redis.StrictRedis(host=redis_host, port=redis_port, db=redis_db, decode_responses=True)
     return redis_conn
+
+
+def get_item_info(key_list, item_name, redis_conn, logger)
+    for key in key_list:
+        item_url = redis_conn.hget(key, "url").strip().strip('/')
+        logger.info('parse %s info: %s' %(item_name, item_url))
+        item_id = item_url.split('/')[-1]
+        item_url_ch = 'https://www.javbus.com/' + item_name + '/' + item_id
+        item_url_ja = 'https://www.javbus.com/ja/' +item_name + '/' + item_id
+        try:
+            r_ch = requests.get(item_url_ch)
+            r_ja = requests.get(item_url_ja)
+            if r_ch.status_code == 200 and r_ja.status_code == 200:
+                r_ch_soup = BeautifulSoup(r_ch.content, 'xml')
+                r_ja_soup = BeautifulSoup(r_ja.content, 'xml')
+                item_ch_name = r_ch_soup.find('div', class_="alert alert-success alert-common").p.b.text.split('-')[0].strip()
+                item_ja_name = r_ja_soup.find('div', class_="alert alert-success alert-common").p.b.text.split('-')[0].strip()
+
+                item_info = {}
+                if item_name == "star":
+                    try:
+                        r = requests.get(item_url)
+                        if r.status_code == 200:
+                            r_soup = BeautifulSoup(r.content, 'xml')
+                            avatar_url = r_soup.find('div', class_="photo-frame").get('src')
+                            for i in r_soup.find('div', class_='photo-info').find_all('p'):
+                                item = i.text.strip().split(':')[0]
+                                value = i.text.strip().split(':')[1].strip()
+                                item_info[item] = value
+                        else:
+                            logger.error('failed to get en for %s page: %s, error code: en_page: %s' %(item_name, item_url, r.status_code))
+                    except Exception as e:
+                        logger.error('failed to parse %s page: %s, error: %s' % (item_name, item_url, e))
+
+                item_info['name_ch'] = item_ch_name
+                item_info['name_ja'] = item_ja_name
+                item_info['url_ja'] = item_url_ja
+                item_info['url_ch'] = item_url_ch
+                redis_conn.hmset(key, item_info)
+                logger.info('parsed info for %s page: %s' % (item_name, item_url))
+            else:
+                logger.error('failed to get ch/ja for %s page: %s, error code: ch_page: %s, ja_page: %s' %(item_name, item_url, r_ch.status_code, r_ja.status_code))
+        except Exception as e:
+            logger.error('failed to parse %s page: %s, error: %s' % (item_name, item_url, e))

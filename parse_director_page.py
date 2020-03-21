@@ -1,6 +1,3 @@
-import requests
-from bs4 import BeautifulSoup
-
 from utils import init_logger, load_config, init_redis_conn, get_item_info
 
 

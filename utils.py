@@ -1,9 +1,10 @@
+import shutil
 import logging
 
 import redis
 import requests
 import yaml
-import shutil
+from bs4 import BeautifulSoup
 
 
 def download_image(url, dst, logger):

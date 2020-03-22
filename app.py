@@ -1,75 +1,45 @@
-from pprint import pprint
-import time
-import logging
-
-import redis
-import yaml
+import asyncio
 
 from parse_list_page import parse_list_page
+from utils import init_logger, load_config, init_redis_conn
 
 
-def main(url, logger, redis_conn):
+def parse_genre_page(url, logger, redis_conn):
     parse_success, movies, next_url = parse_list_page(url, logger)
     if parse_success:
-        pprint(movies)
+        logger.info(movies)
         for movie_id, movie_url in movies.items():
             need_to_parse_movie_key = 'need_to_parse_' + movie_id
             done_parse_movie_key = 'done_parse_' + movie_id
-            # insert movie into redis only it not been seen and not been parsed
-            #if not redis_conn.get(need_to_parse_movie_key) and not redis_conn.get(done_parse_movie_key):
             redis_conn.set(need_to_parse_movie_key, movie_url)
-            #else:
-            #    # movies sorted by release date on list page, if some movie on the page has been got
-            #    # then movies behind it are older, no need to parse next page  
-            #    next_url = ''
     else:
         failed_url_key = 'failed_list_page' +  url
         redis_conn.set(failed_url_key, url)
     return next_url
 
 
-def load_config(config_file):
-    config = dict()
-    try:
-        with open(config_file) as f:
-            config = yaml.full_load(f)
-    except Exception as e:
-        print('failed to load config from %s, error: %s' %(config_file, e))
-    return config
+def parse_genre(url, logger, redis_conn):
+    next_url = parse_genre_page(url, logger, redis_conn)
+    while next_url:
+        next_url = parse_genre_page(next_url, logger, redis_conn)
 
 
-def init_logger(log_file, log_level, log_formatter):
-    log_level_map = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL
-    }
-    log_level = log_level_map.get(log_level)
+async def get_movie_from_genre(genres_info_key_list, redis_conn, logger):
+    if genres_info_key_list:
+        genres_root_page_list = []
+        await_list = []
+        for genre_info_key in genres_info_key_list:
+            genres_root_page_list.append(redis_conn.hget(genre_info_key, 'url'))
+    else:
+        genres_root_page_list = ['https://www.javbus.com/en/genre/g',]
 
-    logger = logging.getLogger(__name__)
-    logger.setLevel(log_level)
-
-    formatter = logging.Formatter(log_formatter)
-
-    ch = logging.StreamHandler()
-    ch.setLevel(log_level)
-    ch.setFormatter(formatter)
-
-    fh = logging.FileHandler(log_file)
-    fh.setLevel(log_level)
-    fh.setFormatter(formatter)
-
-    logger.addHandler(ch)
-    logger.addHandler(fh)
-
-    return logger
+    for url in genres_root_page_list:
+        a = loop.run_in_executor(None, parse_genre, url, logger, redis_conn)
+        await_list.append(a)
+    await asyncio.wait(await_list)
 
 
-if __name__ == "__main__":
-    root_url = 'https://www.javbus.com/en/genre/g'
-
+def main():
     config = load_config('config.yml')
 
     log_config = config.get('log')
@@ -79,24 +49,17 @@ if __name__ == "__main__":
     logger = init_logger(log_file, log_level, log_formatter)
 
     redis_config = config.get('redis')
-    redis_host = redis_config.get('redis_host')
-    redis_port = redis_config.get('redis_port')
-    redis_db = redis_config.get('redis_db')
-    redis_conn = redis.StrictRedis(host=redis_host, port=redis_port, db=redis_db, decode_responses=True)
+    redis_conn = init_redis_conn(redis_config, logger)
 
     # start from every genres' root page
     genres_info_key_list = redis_conn.keys('genre_info_*')
-    if genres_info_key_list:
-        genres_root_page_list = []
-        for genre_info_key in genres_info_key_list:
-            genres_root_page_list.append(redis_conn.hget(genre_info_key, 'url'))
-        for url in genres_root_page_list:
-            next_url = main(url, logger, redis_conn)
-            while next_url:
-                next_url = main(next_url, logger, redis_conn)
-    else:
-        next_url = main(root_url, logger, redis_conn)
-        while next_url:
-            next_url = main(next_url, logger, redis_conn)
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(get_movie_from_genre(genres_info_key_list, redis_conn, logger))
+    loop.close()
+
+
+if __name__ == "__main__":
+    main()
 
 

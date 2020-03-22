@@ -13,22 +13,22 @@ def get_movie_page(movie_key, redis_conn, logger):
     # ignore movie already been parsed
     if redis_conn.hget(movie_key, "parsed") == 1:
             continue
-        movie_url = redis_conn.hget(movie_key, "url")
-        movie_id = movie_url.split('/')[-1]
-        domain_name = movie_url.strip('/en/'+movie_id)
-        movie_url_ch = domain_name + '/' +  movie_id
-        movie_url_ja = domain_name + '/ja/' + movie_id
+    movie_url = redis_conn.hget(movie_key, "url")
+    movie_id = movie_url.split('/')[-1]
+    domain_name = movie_url.strip('/en/'+movie_id)
+    movie_url_ch = domain_name + '/' +  movie_id
+    movie_url_ja = domain_name + '/ja/' + movie_id
 
-        parse_success, movie_info = parse_movie_page(movie_url, logger, redis_conn)
-        if parse_success:
-            update_info = {}
-            update_info['parsed'] = 1
-            update_info['id'] = movie_id
-            update_info['movie_url_ch'] = movie_url_ch
-            update_info['movie_url_ja'] = movie_url_ja
-            update_info['movie_info'] = json.dumps(movie_info)
-            redis_conn.hmset(movie_key, update_info)
-            logger.info('done parse %s' %movie_url)
+    parse_success, movie_info = parse_movie_page(movie_url, logger, redis_conn)
+    if parse_success:
+        update_info = {}
+        update_info['parsed'] = 1
+        update_info['id'] = movie_id
+        update_info['movie_url_ch'] = movie_url_ch
+        update_info['movie_url_ja'] = movie_url_ja
+        update_info['movie_info'] = json.dumps(movie_info)
+        redis_conn.hmset(movie_key, update_info)
+        logger.info('done parse %s' %movie_url)
 
 async def get_movie(movie_key_list, redis_conn, logger):
     loop = asyncio.get_event_loop()

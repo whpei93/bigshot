@@ -9,10 +9,9 @@ from parse_movie_page import parse_movie_page
 from utils import init_logger, load_config, init_redis_conn
 
 
-def get_movie(movie_key_list, redis_conn, logger):
-    for movie_key in movie_key_list:
-        # movie already been parsed
-        if redis_conn.hget(movie_key, "parsed") == 1:
+def get_movie_page(movie_key, redis_conn, logger):
+    # ignore movie already been parsed
+    if redis_conn.hget(movie_key, "parsed") == 1:
             continue
         movie_url = redis_conn.hget(movie_key, "url")
         movie_id = movie_url.split('/')[-1]
@@ -31,6 +30,14 @@ def get_movie(movie_key_list, redis_conn, logger):
             redis_conn.hmset(movie_key, update_info)
             logger.info('done parse %s' %movie_url)
 
+async def get_movie(movie_key_list, redis_conn, logger):
+    loop = asyncio.get_event_loop()
+    await_list = []
+    for movie_key in movie_key_list:
+        a = loop.run_in_executor(None, get_movie_page, redis_conn, logger)
+        await_list.append(a)
+    await asyncio.wait(await_list)
+
 
 def main():
     config = load_config('config.yml')
@@ -44,13 +51,10 @@ def main():
     redis_config = config.get('redis')
     redis_conn = init_redis_conn(redis_config, logger)
 
-    cursor = 0
-    batch_count = 100
-    cursor, movie_key_list = redis_conn.scan(cursor, "movie_*", batch_count)
-    while cursor != 0:
-        get_movie(movie_key_list, redis_conn, logger)
-        cursor, movie_key_list = redis_conn.scan(cursor, "movie_*", batch_count)
-    get_movie(movie_key_list, redis_conn, logger)
+    loop = asyncio.get_event_loop()
+    movie_key_list = redis_conn.scan("movie_*")
+    loop.run_until_complete(get_movie(movie_key_list, redis_conn, logger))
+    loop.close()
 
 
 if __name__ == "__main__":

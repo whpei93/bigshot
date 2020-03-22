@@ -53,8 +53,8 @@ def main():
     redis_conn = init_redis_conn(redis_config, logger)
 
     loop = asyncio.get_event_loop()
-    #movie_key_list = redis_conn.keys("movie_*")
-    c, movie_key_list = redis_conn.scan(0, "movie_*", 1000)
+    movie_key_list = redis_conn.keys("movie_*")
+    #c, movie_key_list = redis_conn.scan(0, "movie_*", 1000)
     loop.run_until_complete(get_movie(movie_key_list, redis_conn, logger))
     loop.close()
 

@@ -19,7 +19,7 @@ def main():
     item_name = "director"
     item_name_list = ["star", "genre", "director", "studio", "label", "series"]
     for item_name in item_name_list:
-        key_list = redis_conn.keys(cursor, "%s_*" % item_name)
+        key_list = redis_conn.keys("%s_*" % item_name)
         loop = asyncio.get_event_loop()
         loop.run_until_complete(get_item_info(key_list, item_name, redis_conn, logger))
         loop.close()

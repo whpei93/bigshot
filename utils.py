@@ -70,7 +70,7 @@ def init_redis_conn(redis_config, logger):
     return redis_conn
 
 
-def get_item_page(key_list, item_name, redis_conn, logger):
+def get_item_page(key, item_name, redis_conn, logger):
     item_url = redis_conn.hget(key, "url").strip().strip('/')
     logger.info('parse %s info: %s' %(item_name, item_url))
     item_id = item_url.split('/')[-1]

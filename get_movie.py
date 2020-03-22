@@ -1,6 +1,7 @@
 from pprint import pprint
 import logging
 import json
+import asyncio
 
 import redis
 import yaml
@@ -12,7 +13,7 @@ from utils import init_logger, load_config, init_redis_conn
 def get_movie_page(movie_key, redis_conn, logger):
     # ignore movie already been parsed
     if redis_conn.hget(movie_key, "parsed") == 1:
-            continue
+        return None
     movie_url = redis_conn.hget(movie_key, "url")
     movie_id = movie_url.split('/')[-1]
     domain_name = movie_url.strip('/en/'+movie_id)
@@ -34,7 +35,7 @@ async def get_movie(movie_key_list, redis_conn, logger):
     loop = asyncio.get_event_loop()
     await_list = []
     for movie_key in movie_key_list:
-        a = loop.run_in_executor(None, get_movie_page, redis_conn, logger)
+        a = loop.run_in_executor(None, get_movie_page, movie_key, redis_conn, logger)
         await_list.append(a)
     await asyncio.wait(await_list)
 
@@ -52,7 +53,8 @@ def main():
     redis_conn = init_redis_conn(redis_config, logger)
 
     loop = asyncio.get_event_loop()
-    movie_key_list = redis_conn.scan("movie_*")
+    #movie_key_list = redis_conn.keys("movie_*")
+    c, movie_key_list = redis_conn.scan(0, "movie_*", 1000)
     loop.run_until_complete(get_movie(movie_key_list, redis_conn, logger))
     loop.close()
 

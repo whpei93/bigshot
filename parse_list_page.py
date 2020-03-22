@@ -1,8 +1,5 @@
-from pprint import pprint
-
 import requests
 from bs4 import BeautifulSoup
-import redis
 
 
 def parse_list_page(url, logger):

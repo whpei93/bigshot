@@ -7,7 +7,7 @@ from utils import init_logger, load_config, init_redis_conn
 def parse_genre_page(url, logger, redis_conn):
     parse_success, movies, next_url = parse_list_page(url, logger)
     if parse_success:
-        logger.info(movies)
+        #logger.info(movies)
         for movie_id, movie_url in movies.items():
             need_to_parse_movie_key = 'need_to_parse_' + movie_id
             done_parse_movie_key = 'done_parse_' + movie_id
@@ -25,6 +25,7 @@ def parse_genre(url, logger, redis_conn):
 
 
 async def get_movie_from_genre(genres_info_key_list, redis_conn, logger):
+    loop = asyncio.get_event_loop()
     if genres_info_key_list:
         genres_root_page_list = []
         await_list = []
@@ -52,7 +53,7 @@ def main():
     redis_conn = init_redis_conn(redis_config, logger)
 
     # start from every genres' root page
-    genres_info_key_list = redis_conn.keys('genre_info_*')
+    genres_info_key_list = redis_conn.keys('genre_*')
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(get_movie_from_genre(genres_info_key_list, redis_conn, logger))

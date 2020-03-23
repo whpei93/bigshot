@@ -11,13 +11,14 @@ def parse_movie_page(url, logger, redis_conn):
     try:
         r = requests.get(url)
         if r.status_code == 200:
-            c = r.content
+            c = r.content.decode('utf-8', 'ignore')
             soup = BeautifulSoup(c, 'xml')
+            if not soup:
+                return False
             movie_info['url'] = url
 
             # parse movie title
             movie_info['title'] = soup.h3.text.strip()
-
             # parse big image url
             bigImage = soup.find("a", class_="bigImage")
             bigImage_src = bigImage.img['src'].strip()

@@ -12,7 +12,7 @@ from utils import init_logger, load_config, init_redis_conn
 
 def get_movie_page(movie_key, redis_conn, logger):
     # ignore movie already been parsed
-    if redis_conn.hget(movie_key, "parsed") == 1:
+    if redis_conn.hget(movie_key, "parsed") == "1":
         return None
     movie_url = redis_conn.hget(movie_key, "url")
     movie_id = movie_url.split('/')[-1]
